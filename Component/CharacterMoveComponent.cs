@@ -163,6 +163,17 @@ namespace EC
             }
         }
 
+        public void DoAttackMove(Vector3 dir)
+        {
+            HorizontalForwardDir = dir;
+            HorizontalMoveSpeed = GameConfig.Instance.SPEED_ATTACK_MOVE;
+        }
+
+        public void ForceChangeFaceDir(Vector3 dir)
+        {
+            
+        }
+
         public void Jump()
         {
             VerticalForwardDir = Vector3.up;

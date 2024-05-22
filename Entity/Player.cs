@@ -21,6 +21,11 @@ namespace EC
             var clips = animComp.ParentAnimator.runtimeAnimatorController.animationClips;
             for (int i = 0; i < clips.Length; i++)
             {
+                if (clips[i].isLooping)
+                {
+                    continue;
+                }
+
                 AnimationEvent e = new AnimationEvent();
                 e.stringParameter = clips[i].name;
                 e.functionName = "AnimOverEvent";
@@ -32,6 +37,7 @@ namespace EC
         
         public void AnimOverEvent(string clipName)
         {
+            Debug.Log($"overrrr  {clipName}");
             GameEventManager.Instance.PublishToEntity(EventType.AnimOver, null, clipName);
         }
     }

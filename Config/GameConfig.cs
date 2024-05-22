@@ -23,7 +23,7 @@ public class GameConfig : MonoSingleton<GameConfig>
     [Range(0f, 10f)] public float CAMERA_ROTATE_LERP_SPEED = 8f;
 
     [Range(0f, 1f)] public float COMMON_ACTION_DELAY_TIME = 0.15f;
-    
+    [Range(0f, 1f)] public float SPEED_ATTACK_MOVE = 0.15f;
     public static float FRAME = 1 / 60f; 
     
     public override void Init()

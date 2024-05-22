@@ -57,8 +57,6 @@ namespace EC
             }
         }
 
-        private ActionType curActionType = ActionType.None;
-        
         public ControllerComponent() : base(ComponentType.Controller)
         {
 
@@ -83,7 +81,7 @@ namespace EC
         private void CreateAction()
         {
             JoyStickDir = Vector3.zero;
-            curActionType = ActionType.None;
+            var curActionType = ActionType.None;
             
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.MoveForward]))
             {

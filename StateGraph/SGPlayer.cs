@@ -41,10 +41,6 @@ namespace EC.StateGraph
                     stateComp.GotoState(StateEnum.Idle);
                 }
             });
-            fallState.RegisterEvent(EventType.AnimOver, (entity, data) =>
-            {
-                // Debug.Log($"anim {data.ToString()} overrrrr ");
-            });
             states.Add(StateEnum.Fall, fallState);
 
             var comp = entt.GetEComponent<StateComponent>(ComponentType.State);
