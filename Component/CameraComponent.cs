@@ -122,7 +122,7 @@ namespace EC
         }
         #endregion
         
-        public CameraComponent(Entity e) : base(ComponentType.Camera, e)
+        public CameraComponent() : base(ComponentType.Camera)
         {
 
         }

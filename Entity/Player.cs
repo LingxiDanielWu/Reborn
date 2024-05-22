@@ -1,21 +1,38 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using EC.Component;
+using EC.Manager;
+
 namespace EC
 {
     public class Player : Entity
     {
-        public Player(string resName, GameObject parent = null) : base(EntityType.Player)
+        public Player() : base(EntityType.Player)
         {
-            var resComp = AddEComponent<GameObjectComponent>(new GameObjectComponent(this, resName, parent));
-            var actionComp = AddEComponent<ActionComponent>(new ActionComponent(this));
-            AddEComponent<AnimatorComponent>(new AnimatorComponent(this, resComp.EGameObject.GetComponent<Animator>()));
-            AddEComponent<ControllerComponent>(new ControllerComponent(this));
-            var stateComp = AddEComponent<StateComponent>(new StateComponent(this));
-            AddEComponent<CharacterMoveComponent>(new CharacterMoveComponent(this));
-            AddEComponent<CameraComponent>(new CameraComponent(this));
-            AddEComponent<EventComponent>(new EventComponent(this));
             
-            actionComp.AddDoActionListener(stateComp);
+        }
+        
+        public void InitAnimEvent()
+        {
+            var animComp = GetEComponent<AnimatorComponent>(ComponentType.Animator);
+            if (animComp == null || animComp.ParentAnimator == null)
+                return;
+
+            var clips = animComp.ParentAnimator.runtimeAnimatorController.animationClips;
+            for (int i = 0; i < clips.Length; i++)
+            {
+                AnimationEvent e = new AnimationEvent();
+                e.stringParameter = clips[i].name;
+                e.functionName = "AnimOverEvent";
+                e.time = clips[i].length;
+                clips[i].AddEvent(e);
+            }
+            GameEventManager.Instance.RegisterListener(EventType.AnimOver, this);
+        }
+        
+        public void AnimOverEvent(string clipName)
+        {
+            GameEventManager.Instance.PublishToEntity(EventType.AnimOver, null, clipName);
         }
     }
 }

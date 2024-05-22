@@ -1,3 +1,6 @@
+using System;
+using EC.Manager;
+using UnityEditor.UI;
 using UnityEngine;
 
 namespace EC.Component
@@ -10,9 +13,19 @@ namespace EC.Component
             private set;
         }
 
-        public AnimatorComponent(Entity e, Animator animator): base(ComponentType.Animator, e)
+        public AnimatorComponent(Animator animator): base(ComponentType.Animator)
         {
             ParentAnimator = animator;
+        }
+
+        public override void Attach(Entity e)
+        {
+            base.Attach(e);
+            if (Parent is Player)
+            {
+                var p = Parent as Player;
+                p.InitAnimEvent();
+            }
         }
 
         public override void SetActive(bool isActive)
@@ -23,27 +36,16 @@ namespace EC.Component
 
         public override void Tick(float deltaTime, params object[] paras)
         {
-            
         }
 
-        public void ExitState(StateEnum stateEnum)
+        public void Play(string key, int value = 1)
         {
-            
+            ParentAnimator.SetInteger(key, value);
         }
 
-        public void SetTrigger(string triggerName)
+        public void Stop(string key)
         {
-            ParentAnimator.SetTrigger(triggerName);
-        }
-
-        public void ResetTrigger(string triggerName)
-        {
-            ParentAnimator.ResetTrigger(triggerName);
-        }
-
-        public void SetInt(string param, int value = 0)
-        {
-            ParentAnimator.SetInteger(param, value);
+            ParentAnimator.SetInteger(key, 0);
         }
 
         public override void Init()

@@ -35,7 +35,7 @@ namespace EC
 
         private Dictionary<ActionType, Action> actionHandlers = new Dictionary<ActionType, Action>();
 
-        public StateComponent(Entity e) : base(ComponentType.State, e)
+        public StateComponent() : base(ComponentType.State)
         {
             curStateEnum = StateEnum.None;
         }
@@ -116,6 +116,16 @@ namespace EC
             actionHandlers.TryAdd(type, handler);
         }
 
+        public override void Attach(Entity e)
+        {
+            base.Attach(e);
+            var actionComp = e.GetEComponent<ActionComponent>(ComponentType.Action);
+            if (actionComp != null)
+            {
+                actionComp.AddDoActionListener(this);
+            }
+        }
+
         public void HandleAction(ActionType type)
         {
             if (actionHandlers.TryGetValue(type, out Action handler))
@@ -156,7 +166,8 @@ namespace EC
         private int timeInState = 0;
         private int timelineIndex = -1;
         private List<TimeEvent> timeline = new List<TimeEvent>();
-        
+        private List<Action> exitFns = new List<Action>();
+
         public State(StateEnum state, Entity entt, 
             Action<Entity, object> enterAction = null, 
             Action<Entity, float, object> stayAction = null, 

@@ -2,16 +2,9 @@ using System.Collections.Generic;
 
 namespace EC.Manager
 {
-    public enum GameEventType
-    {
-        
-    }
-    
     public class GameEventManager : Singleton<GameEventManager>
     {
-        public delegate void Handler(object data);
-
-        private Dictionary<EventType, List<Handler>> subscriberList = new Dictionary<EventType, List<Handler>>();
+        private Dictionary<EventType, List<Entity>> registerEntts = new Dictionary<EventType, List<Entity>>();
 
         public override void Init()
         {
@@ -22,35 +15,37 @@ namespace EC.Manager
 
         }
 
-        public void Subscribe(EventType type, Handler action)
+        public void RegisterListener(EventType type, Entity e)
         {
-            if (!subscriberList.ContainsKey(type))
+            if (!registerEntts.ContainsKey(type))
             {
-                subscriberList.Add(type, new List<Handler>());
+                registerEntts.Add(type, new List<Entity>());
             }
 
-            if (!subscriberList[type].Contains(action))
+            if (!registerEntts[type].Contains(e))
             {
-                subscriberList[type].Add(action);
-            }
-        }
-
-        public void UnSubscribe(EventType type, Handler action)
-        {
-            if (subscriberList.ContainsKey(type) && subscriberList[type].Contains(action))
-            {
-                subscriberList[type].Remove(action);
+                registerEntts[type].Add(e);
             }
         }
 
-        public void Publish(EventType type, object para)
+        public void UnRegisterListener(EventType type, Entity e)
         {
-            if (subscriberList.ContainsKey(type))
+            if (registerEntts.TryGetValue(type, out List<Entity> etts))
             {
-                var handlers = subscriberList[type];
-                for (int i = 0; i < handlers.Count; i++)
+                if (etts.Contains(e))
                 {
-                    handlers[i](para);
+                    etts.Remove(e);
+                }
+            }
+        }
+
+        public void PublishToEntity(EventType type, Entity e, object data)
+        {
+            if (registerEntts.TryGetValue(type, out List<Entity> etts))
+            {
+                for (int i = 0; i < etts.Count; i++)
+                {
+                    etts[i].Publish(e, type, data);
                 }
             }
         }

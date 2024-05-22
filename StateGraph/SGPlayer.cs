@@ -41,6 +41,10 @@ namespace EC.StateGraph
                     stateComp.GotoState(StateEnum.Idle);
                 }
             });
+            fallState.RegisterEvent(EventType.AnimOver, (entity, data) =>
+            {
+                // Debug.Log($"anim {data.ToString()} overrrrr ");
+            });
             states.Add(StateEnum.Fall, fallState);
 
             var comp = entt.GetEComponent<StateComponent>(ComponentType.State);
@@ -71,7 +75,7 @@ namespace EC.StateGraph
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
             if (animComp != null)
             {
-                animComp.SetTrigger("Idle");
+                animComp.Play("Idle");
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Idle");
         }
@@ -86,7 +90,7 @@ namespace EC.StateGraph
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
             if (animComp != null)
             {
-                animComp.ResetTrigger("Idle");
+                animComp.Stop("Idle");
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Idle");
         }
@@ -103,10 +107,10 @@ namespace EC.StateGraph
             var moveComp = e.GetEComponent<CharacterMoveComponent>(ComponentType.CharacterMove);
             if (moveComp != null)
             {
-                moveComp.Move(controllerComp.ControllerDir);
-                int moveDir = Utils.GetOrientation(Vector3.forward, controllerComp.ControllerDir);
+                moveComp.Move(controllerComp.JoyStickDir);
+                int moveDir = Utils.GetOrientation(Vector3.forward, controllerComp.JoyStickDir);
                 var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-                animComp.SetInt("Move", moveDir);
+                animComp.Play("Move", moveDir);
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Running");
         }
@@ -117,11 +121,11 @@ namespace EC.StateGraph
             var moveComp = e.GetEComponent<CharacterMoveComponent>(ComponentType.CharacterMove);
             if (moveComp != null)
             {
-                moveComp.Move(controllerComp.ControllerDir);
+                moveComp.Move(controllerComp.JoyStickDir);
                 var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-                animComp.SetInt("Move", Utils.GetOrientation(Vector3.forward, controllerComp.ControllerDir));
+                animComp.Play("Move", Utils.GetOrientation(Vector3.forward, controllerComp.JoyStickDir));
 
-                if (controllerComp.ControllerDir == Vector3.zero)
+                if (controllerComp.JoyStickDir == Vector3.zero)
                 {
                     e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Idle);
                 }
@@ -133,7 +137,7 @@ namespace EC.StateGraph
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
             if (animComp != null)
             {
-                animComp.SetInt("Move", 0);   
+                animComp.Stop("Move");   
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Running");
         }
@@ -151,7 +155,7 @@ namespace EC.StateGraph
             {
                 moveComp.Jump();
                 var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-                animComp.SetTrigger("Jump");
+                animComp.Play("Jump");
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Jumping");
         }
@@ -162,7 +166,7 @@ namespace EC.StateGraph
             var moveComp = e.GetEComponent<CharacterMoveComponent>(ComponentType.CharacterMove);
             if (moveComp != null)
             {
-                Vector3 dir = controllerComp.ControllerDir;
+                Vector3 dir = controllerComp.JoyStickDir;
                 dir *= GameConfig.Instance.JUMPING_CHANGE_HORIZONTAL_DIR_FACTOR;
                 moveComp.ChangeHorizontalDir(deltaTime * dir);
             }
@@ -171,7 +175,7 @@ namespace EC.StateGraph
         public void OnExitJump(Entity e, object param = null)
         {
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            animComp?.ResetTrigger("Jump");
+            animComp?.Stop("Jump");
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Jumping");
         }
 
@@ -191,7 +195,7 @@ namespace EC.StateGraph
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
             if (animComp != null)
             {
-                animComp.SetTrigger("Fall");
+                animComp.Play("Fall");
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Falling");
         }
@@ -202,7 +206,7 @@ namespace EC.StateGraph
             var moveComp = e.GetEComponent<CharacterMoveComponent>(ComponentType.CharacterMove);
             if (moveComp != null)
             {
-                Vector3 dir = controllerComp.ControllerDir;
+                Vector3 dir = controllerComp.JoyStickDir;
                 dir *= GameConfig.Instance.JUMPING_CHANGE_HORIZONTAL_DIR_FACTOR;
                 moveComp.ChangeHorizontalDir(deltaTime * dir);
             }
@@ -211,7 +215,7 @@ namespace EC.StateGraph
         public void OnExitFall(Entity e, object param = null)
         {
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            animComp?.ResetTrigger("Fall");
+            animComp?.Stop("Fall");
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Falling");
         }
 

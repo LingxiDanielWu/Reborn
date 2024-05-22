@@ -1,4 +1,7 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace EC
 {
@@ -11,7 +14,7 @@ namespace EC
         Plant
     }
 
-    public class Entity
+    public class Entity : MonoBehaviour
     {
         public EntityType EType
         {
@@ -45,10 +48,12 @@ namespace EC
             eComponents.Clear();
         }
 
-        public T AddEComponent<T>(EComponent c) where T : EComponent
+        public void AddEComponent(EComponent c)
         {
-            eComponents.Add(c.CType, c);
-            return c as T;
+            if (!eComponents.TryAdd(c.CType, c))
+            {
+                Debug.LogError($"Component {c.CType} already exist in {EType}");
+            }
         }
 
         public void RemoveEComponent(EComponent c)
@@ -64,24 +69,24 @@ namespace EC
             return null;
         }
 
-        public void Tick(float deltaTime)
+        public void Update()
         {
             foreach (var pair in eComponents)
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.Tick(deltaTime);
+                    pair.Value.Tick(Time.deltaTime);
                 }
             }
         }
 
-        public void LateTick(float deltaTime)
+        public void LateUpdate()
         {
             foreach (var pair in eComponents)
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.LateTick(deltaTime);
+                    pair.Value.LateTick(Time.deltaTime);
                 }
             }
         }
@@ -91,7 +96,8 @@ namespace EC
             var eventComp = GetEComponent<EventComponent>(ComponentType.Event);
             if (eventComp == null)
             {
-                eventComp = AddEComponent<EventComponent>(new EventComponent(this));
+                eventComp = new EventComponent();
+                eventComp.Attach(this);
             }
             
             eventComp.Subscribe(type, action);
@@ -118,9 +124,26 @@ namespace EC
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.HandleEvent(type, pair);
+                    pair.Value.HandleEvent(type, para);
                 }
             }
+        }
+
+        public void DoTask(Action func, float delayTime = 0)
+        {
+            if (delayTime == 0)
+            {
+                func();
+                return;
+            }
+
+            StartCoroutine(DoTaskCoroutine(func, delayTime));
+        }
+
+        private IEnumerator DoTaskCoroutine(Action func, float delayTime)
+        {
+            yield return new WaitForSeconds(delayTime);
+            func();
         }
     }
 }

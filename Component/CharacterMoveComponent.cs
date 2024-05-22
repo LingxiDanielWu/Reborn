@@ -51,7 +51,7 @@ namespace EC
             private set;
         }
 
-        public CharacterMoveComponent(Entity e) : base(ComponentType.CharacterMove, e)
+        public CharacterMoveComponent() : base(ComponentType.CharacterMove)
         {
         }
 

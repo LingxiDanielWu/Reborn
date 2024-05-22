@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,17 +24,24 @@ namespace EC.Component
         public Entity Doer;
         public Entity Target;
         public ActionType Type;
+        public float DelayTime;
         
-        public BufferedAction(Entity doer, Entity target, Vector3 dir, ActionType type = ActionType.None)
+        public BufferedAction(Entity doer, Entity target, Vector3 dir, ActionType type = ActionType.None, float delayTime = 0f)
         {
             Doer = doer;
             Target = target;
             Dir = dir;
             Type = type;
+            DelayTime = delayTime;
         }
 
-        public bool IsValid()
+        public bool IsValid(Entity e)
         {
+            if (ActionComponent.ACTION_CONDITION.TryGetValue(Type, out Func<Entity, BufferedAction, bool> condition))
+            {
+                return condition(e, this);
+            }
+
             return true;
         }
     }
@@ -45,7 +53,7 @@ namespace EC.Component
             { ActionType.Run, (entity, action) =>
             {
                 var comp = entity.GetEComponent<StateComponent>(ComponentType.State); 
-                return comp.HasTag("Idle");
+                return comp.HasTag("Idle") || comp.HasTag("Running");
             } },
             { ActionType.Jump, (entity, action) =>
             {
@@ -56,10 +64,10 @@ namespace EC.Component
         };
 
         private List<EComponent> listenComps = new List<EComponent>();
-        
         private Queue<BufferedAction> actionQueue = new Queue<BufferedAction>();
-
-        public ActionComponent(Entity e) : base(ComponentType.Action, e)
+        private BufferedAction curDoingAction;
+        
+        public ActionComponent(Entity e) : base(ComponentType.Action)
         {
         }
 
@@ -73,34 +81,48 @@ namespace EC.Component
 
         }
 
-        public void AddAction(BufferedAction action)
+        public void TryPushAction(BufferedAction action)
         {
+            if (IsBusy() || !action.IsValid(Parent))
+            {
+                return;
+            }
+
             actionQueue.Enqueue(action);
         }
 
         public override void Tick(float deltaTime, params object[] paras)
         {
-            HandleAction();
-        }
-
-        private void HandleAction()
-        {
-            if (actionQueue.Count == 0)
+            // foreach (var ba in actionQueue)
+            // {
+            //     Debug.Log($" type:{ba.Type} dir:{ba.Dir.ToString()} time:{ba.DelayTime}");
+            // }
+            if (actionQueue.Count == 0 || IsBusy())
                 return;
 
-            var action = actionQueue.Peek();
-            DoAction(action);
-            actionQueue.Dequeue();
+            if (curDoingAction == null)
+            {
+                curDoingAction = actionQueue.Peek();
+            }
+
+            if (curDoingAction.DelayTime == 0)
+            {
+                DoAction(curDoingAction);
+            }
+            else
+            {
+                Parent.DoTask(() => { DoAction(curDoingAction); }, curDoingAction.DelayTime);   
+            }
         }
 
         private void DoAction(BufferedAction action)
         {
-            if (action.Type == ActionType.None || IsBusy())
+            if (action.Type == ActionType.None)
             {
                 return;
             }
 
-            if (ACTION_CONDITION.ContainsKey(action.Type) && ACTION_CONDITION[action.Type](Parent, action))
+            if (action.IsValid(Parent))
             {
                 foreach (var c in listenComps)
                 {
@@ -111,10 +133,18 @@ namespace EC.Component
                     }
                 }
             }
+
+            actionQueue.Dequeue();
+            curDoingAction = null;
         }
 
-        private bool IsBusy()
+        public bool IsBusy()
         {
+            if (curDoingAction != null)
+            {
+                return true;
+            }
+
             if (Parent.GetEComponent<StateComponent>(ComponentType.State).IsBusy)
             {
                 return true;

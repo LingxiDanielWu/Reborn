@@ -1,4 +1,6 @@
 
+ using UnityEditor.Experimental.GraphView;
+
  namespace EC
  {
      public enum ComponentType
@@ -50,10 +52,15 @@
              }
          }
 
-         public EComponent(ComponentType type, Entity e)
+         public EComponent(ComponentType type)
          {
              CType = type;
+         }
+
+         public virtual void Attach(Entity e)
+         {
              parent = e;
+             e.AddEComponent(this);
          }
 
          public abstract void Init();

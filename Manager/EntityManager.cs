@@ -14,36 +14,6 @@ namespace EC.Manager
         public override void Dispose()
         {
         }
-        
-        public override void Tick(float deltaTime)
-        {
-            foreach (var group in entityGroups)
-            {
-                for (int i = 0; i < group.Value.Count; i++)
-                {
-                    var e = group.Value[i];
-                    if (e != null)
-                    {
-                        e.Tick(deltaTime);
-                    }
-                }
-            }
-        }
-
-        public override void LateTick(float deltaTime)
-        {
-            foreach (var group in entityGroups)
-            {
-                for (int i = 0; i < group.Value.Count; i++)
-                {
-                    var e = group.Value[i];
-                    if (e != null)
-                    {
-                        e.LateTick(deltaTime);
-                    }
-                }
-            }
-        }
 
         public void AddEntity(Entity e)
         {

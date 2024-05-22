@@ -26,6 +26,7 @@ namespace EC
         FallDown,
         FallToGround,
         ControllerDirectionChanged,
+        AnimOver,
     }
     
     public delegate void Handler(Entity entity, object data);
@@ -34,7 +35,7 @@ namespace EC
     {
         private Dictionary<EventType, List<Handler>> subscriberList = new Dictionary<EventType, List<Handler>>();
         
-        public EventComponent(Entity e) : base(ComponentType.Event, e)
+        public EventComponent() : base(ComponentType.Event)
         {
 
         }

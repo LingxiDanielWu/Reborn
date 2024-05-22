@@ -14,7 +14,7 @@ namespace EC
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
             if (animComp != null)
             {
-                animComp.SetInt("Attack", 2);   
+                animComp.Play("Attack", 2);   
             }
         }
 
@@ -23,7 +23,7 @@ namespace EC
             var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
             if (animComp != null)
             {
-                animComp.SetInt("Attack", 0);   
+                animComp.Play("Attack", 0);   
             }
         }
 

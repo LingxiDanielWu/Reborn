@@ -36,25 +36,32 @@ namespace EC
             { ControlOpt.CameraRotate , new List<InputData>{new InputData(InputValue.MouseRight, InputType.Mouse, InputState.Hold)}},
         };
         
-        public Vector3 ControllerDir
+        public Vector3 JoyStickDir
+        {
+            get;
+            private set;
+        }
+
+        private ActionComponent actionComp;
+
+        public ActionComponent ActionComp
         {
             get
             {
-                return entityAction.Dir;
+                if (actionComp == null)
+                {
+                    actionComp = Parent.GetEComponent<ActionComponent>(ComponentType.Action);
+                }
+
+                return actionComp;
             }
         }
 
-        private BufferedAction entityAction;
-        private ActionComponent actionComp;
+        private ActionType curActionType = ActionType.None;
         
-        public ControllerComponent(Entity e) : base(ComponentType.Controller, e)
+        public ControllerComponent() : base(ComponentType.Controller)
         {
-            entityAction = new BufferedAction(
-                e, 
-                null,
-                Vector3.zero
-                );
-            actionComp = e.GetEComponent<ActionComponent>(ComponentType.Action);
+
         }
 
         public override void Tick(float deltaTime, params object[] paras)
@@ -75,47 +82,52 @@ namespace EC
 
         private void CreateAction()
         {
-            entityAction.Dir = Vector3.zero;
+            JoyStickDir = Vector3.zero;
+            curActionType = ActionType.None;
+            
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.MoveForward]))
             {
-                entityAction.Dir += Vector3.forward;
+                JoyStickDir += Vector3.forward;
             }
             
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.MoveBack]))
             {
-                entityAction.Dir += Vector3.back;
+                JoyStickDir += Vector3.back;
             }
             
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.MoveLeft]))
             {
-                entityAction.Dir += Vector3.left;
+                JoyStickDir += Vector3.left;
             }
             
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.MoveRight]))
             {
-                entityAction.Dir += Vector3.right;
+                JoyStickDir += Vector3.right;
             }
-            
-            entityAction.Type = ActionType.None;
+
+            float delayTime = 0;
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.Jump]))
             {
-                entityAction.Type = ActionType.Jump;
+                curActionType = ActionType.Jump;
+                delayTime = GameConfig.Instance.COMMON_ACTION_DELAY_TIME;
             }
             else if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.Attack]))
             {
-                entityAction.Type = ActionType.Attack;
+                curActionType = ActionType.Attack;
             }
             
-            if (entityAction.Type !=ActionType.None)
+            if (curActionType != ActionType.None)
             {
-                actionComp.AddAction(entityAction);
+                var playerAction = new BufferedAction(Parent, null, JoyStickDir, curActionType, delayTime);
+                ActionComp.TryPushAction(playerAction);
             }
             else
             {
-                if (entityAction.Dir != Vector3.one)
+                if (JoyStickDir != Vector3.zero)
                 {
-                    entityAction.Type = ActionType.Run;
-                    actionComp.AddAction(entityAction);
+                    curActionType = ActionType.Run;
+                    var playerAction = new BufferedAction(Parent, null, JoyStickDir, curActionType);
+                    ActionComp.TryPushAction(playerAction);
                 }
             }
         }

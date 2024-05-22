@@ -22,13 +22,13 @@ namespace EC.Component
             private set;
         }
 
-        public GameObjectComponent(Entity e, string resName, GameObject parent = null): base(ComponentType.GameObject, e)
+        public GameObjectComponent(string resName, GameObject parent = null): base(ComponentType.GameObject)
         {
             ResName = resName;
             ObjParent = parent;
             LoadAsset(ObjParent);
         }
-
+        
         public override void Init()
         {
             

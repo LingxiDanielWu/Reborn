@@ -1,3 +1,4 @@
+using EC.Component;
 using UnityEngine;
 
 namespace EC.Manager
@@ -17,7 +18,17 @@ namespace EC.Manager
             switch (type)
             {
                 case EntityType.Player:
-                    Player player = new Player(resName, parent);
+                    GameObjectComponent resComp = new GameObjectComponent(resName, parent);
+                    Player player = resComp.EGameObject.AddComponent<Player>();
+                    
+                    resComp.Attach(player);
+                    new ActionComponent(player).Attach(player);
+;                   new StateComponent().Attach(player);
+                    new AnimatorComponent(resComp.EGameObject.GetComponent<Animator>()).Attach(player);
+                    new ControllerComponent().Attach(player);
+                    new CharacterMoveComponent().Attach(player);
+                    new CameraComponent().Attach(player);
+                    new EventComponent().Attach(player);
                     return player;
                 default:
                     return null;
