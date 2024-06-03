@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public static class Utils
@@ -29,7 +30,24 @@ public static class Utils
 
         return 0;
     }
-    
+
+    public static string GetDirectionDesc(int dir)
+    {
+        switch (dir)
+        {
+            case 1:
+                return "Forward";
+            case 2:
+                return "Backward";
+            case 3:
+                return "Left";
+            case 4:
+                return "Right";
+        }
+
+        return "";
+    }
+
     public static float GetVecAngle(Vector3 from, Vector3 to)
     {
         var angle = Vector3.Angle(from, to);
@@ -39,5 +57,11 @@ public static class Utils
         }
 
         return angle;
+    }
+
+    public static string GetEnumName(Type enumType, object value, bool isLower = true)
+    {
+        string name = Enum.GetName(enumType, value);
+        return string.IsNullOrEmpty(name) ? "" : isLower ? name.ToLower() : name;
     }
 }

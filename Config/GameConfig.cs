@@ -16,7 +16,7 @@ public class GameConfig : MonoSingleton<GameConfig>
 
     [Range(0, 100f)] public float CAMERA_ROTATE_SPEED = 50f;
     [Range(0, 100f)] public float CAMERA_FOLLOW_ROTATE_SPEED = 0.5f;
-    [Range(0, 10f)] public float CHARACTER_TURN_DIR_SPEED = 0.12f;
+    [Range(0, 20f)] public float CHARACTER_TURN_DIR_SPEED = 8f;
     [Range(0, 50f)] public float MIN_DISTANCE_FROM_CAMERA_TO_CHARACTER = 1.3f;
     [Range(-90f, 0f)] public float MIN_CAMERA_PIVOT_Y = -3.5f;
     [Range(0f, 90f)] public float MAX_CAMERA_PIVOT_Y = 60f;

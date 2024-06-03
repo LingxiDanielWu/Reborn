@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using EC.Component;
 using UnityEngine;
 
@@ -7,19 +8,8 @@ namespace EC
     {
         private const float GroundedVerticalSpeedFactor = 0.1f;
         private CharacterController ctrlerComp;
-        public CharacterController CtrlerComp
-        {
-            get
-            {
-                if (ctrlerComp == null)
-                {
-                    var resComp = Parent.GetEComponent<GameObjectComponent>(ComponentType.GameObject);
-                    ctrlerComp = resComp.EGameObject.GetComponent<CharacterController>();
-                }
-
-                return ctrlerComp;
-            }
-        }
+        private CameraComponent cameraComp;
+        private GameObjectComponent goComp;
 
         public Vector3 HorizontalForwardDir
         {
@@ -51,20 +41,26 @@ namespace EC
             private set;
         }
 
+        private Vector3 lastTargetForward;
+
         public CharacterMoveComponent() : base(ComponentType.CharacterMove)
         {
         }
-
-        private Vector3 turnVelocity;
         
         public override void Tick(float deltaTime, params object[] paras)
         {
             if (IsStandStill())
             {
+                //上一次旋转没做完但是停下了，需要继续做完
+                if (goComp.EGameObject.transform.forward != lastTargetForward)
+                {
+                    FixHandleRotate(deltaTime);
+                }
+
                 return;
             }
 
-            if (CtrlerComp.isGrounded)
+            if (ctrlerComp.isGrounded)
             {
                 if (VerticalMoveSpeed < 0f && Mathf.Abs(VerticalMoveSpeed - GameConfig.Instance.GRAVITY_ACCELATION * GroundedVerticalSpeedFactor) > 0.001f)
                 {
@@ -84,24 +80,24 @@ namespace EC
                 VerticalForwardDir = Vector3.up;
             }
 
-            var forward = GetCurForward();
-            var gameObj = Parent.GetEComponent<GameObjectComponent>(ComponentType.GameObject);
-            gameObj.EGameObject.transform.forward = Vector3.Lerp(gameObj.EGameObject.transform.forward, forward, GameConfig.Instance.CHARACTER_TURN_DIR_SPEED);
-            
-            Vector3 hMotion = HorizontalMoveSpeed * HorizontalMoveDragFactor * deltaTime * forward;
-            Vector3 vMotion = VerticalMoveSpeed * deltaTime * VerticalForwardDir;
-            CtrlerComp.Move(hMotion + vMotion);
+            HandleRotate(deltaTime);
+            HandleMove(deltaTime);
+        }
+
+        private float GetTurnDirFactor(Vector3 from, Vector3 to)
+        {
+            float factor = Mathf.Max(Utils.GetVecAngle(from, to) / 90f, 1f);
+            return factor;
         }
 
         public Vector3 GetCharacterColliderCenter()
         {
-            return CtrlerComp.gameObject.transform.TransformPoint(CtrlerComp.center);
+            return ctrlerComp.gameObject.transform.TransformPoint(ctrlerComp.center);
         }
 
         private Vector3 GetCurForward()
         {
             //先基于相机朝向获取行走方向
-            var cameraComp = Parent.GetEComponent<CameraComponent>(ComponentType.Camera);
             if (cameraComp != null)
             {
                 var angle = GetCurHorizontalAngle();
@@ -119,10 +115,38 @@ namespace EC
             return Utils.GetVecAngle(Vector3.forward, HorizontalForwardDir);
         }
 
+        private void HandleRotate(float deltaTime)
+        {
+            var newForward = GetCurForward();
+            var targetRotation = Quaternion.LookRotation(newForward);
+            lastTargetForward = newForward;
+            
+            var trans = goComp.EGameObject.transform;
+            float factor = GetTurnDirFactor(trans.forward, newForward);
+            trans.rotation = Quaternion.Lerp(trans.rotation, targetRotation, factor * deltaTime * GameConfig.Instance.CHARACTER_TURN_DIR_SPEED);
+        }
+        
+        private void FixHandleRotate(float deltaTime)
+        {
+            //todo:转向角度较大但是移动时间极短时，使用插值会出现角色转到中途停住的情况，需要作补偿
+            var targetRotation = Quaternion.LookRotation(lastTargetForward);
+            var trans = goComp.EGameObject.transform;
+            float factor = GetTurnDirFactor(trans.forward, lastTargetForward);
+            trans.rotation = Quaternion.Lerp(trans.rotation, targetRotation, factor * deltaTime * GameConfig.Instance.CHARACTER_TURN_DIR_SPEED);
+        }
+
+        private void HandleMove(float deltaTime)
+        {
+            var forward = GetCurForward();
+            Vector3 hMotion = HorizontalMoveSpeed * HorizontalMoveDragFactor * deltaTime * forward;
+            Vector3 vMotion = VerticalMoveSpeed * deltaTime * VerticalForwardDir;
+            ctrlerComp.Move(hMotion + vMotion);
+        }
+
         private bool IsStandStill()
         {
             bool isOnGround = Mathf.Abs(VerticalMoveSpeed - GameConfig.Instance.GRAVITY_ACCELATION * GroundedVerticalSpeedFactor) <= 0.001f;
-            return CtrlerComp.isGrounded && isOnGround && HorizontalMoveSpeed == 0;
+            return ctrlerComp.isGrounded && isOnGround && HorizontalMoveSpeed == 0;
         }
         
         public void BackToGround()
@@ -184,6 +208,10 @@ namespace EC
         public override void Init()
         {
             HorizontalMoveDragFactor = 1f;
+            goComp = Parent.GetEComponent<GameObjectComponent>(ComponentType.GameObject);
+            cameraComp = Parent.GetEComponent<CameraComponent>(ComponentType.Camera);
+            ctrlerComp = goComp.EGameObject.GetComponent<CharacterController>();
+            lastTargetForward = goComp.EGameObject.transform.forward;
         }
         
         public override void Dispose()

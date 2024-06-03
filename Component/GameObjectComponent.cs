@@ -1,32 +1,19 @@
+using Cysharp.Text;
 using UnityEngine;
 
 namespace EC.Component
 {
     public class GameObjectComponent : EComponent
     {
-        public string ResName
-        {
-            get;
-            private set;
-        }
-
-        public GameObject ObjParent
-        {
-            get;
-            private set;
-        }
-
         public GameObject EGameObject
         {
             get;
             private set;
         }
 
-        public GameObjectComponent(string resName, GameObject parent = null): base(ComponentType.GameObject)
+        public GameObjectComponent(EntityType enttType, string resName, GameObject parent = null): base(ComponentType.GameObject)
         {
-            ResName = resName;
-            ObjParent = parent;
-            LoadAsset(ObjParent);
+            LoadAsset(enttType, resName, parent);
         }
         
         public override void Init()
@@ -34,18 +21,33 @@ namespace EC.Component
             
         }
 
-        private void LoadAsset(GameObject parent = null)
+        public T BindEntity<T>() where T : Entity
         {
-            var prefab = Resources.Load<GameObject>(ResName);
-            if (parent != null)
+            if (EGameObject.GetComponent<T>() == null)
             {
-                EGameObject = GameObject.Instantiate(prefab, parent.transform);
+                return EGameObject.AddComponent<T>();
             }
-            else
+
+            return null;
+        }
+
+        private void LoadAsset(EntityType enttType, string resName, GameObject parent = null)
+        {
+            string bundleDir = Utils.GetEnumName(typeof(EntityType), enttType);
+            var bundle = AssetBundle.LoadFromFile(ZString.Format("Assets/AssetBundles/prefab/{0}", bundleDir));
+            if (bundle != null)
             {
-                EGameObject = GameObject.Instantiate(prefab);
+                var prefab = bundle.LoadAsset<GameObject>(resName);
+                if (parent != null)
+                {
+                    EGameObject = GameObject.Instantiate(prefab, parent.transform);
+                }
+                else
+                {
+                    EGameObject = GameObject.Instantiate(prefab);
+                }
+                EGameObject.transform.position = new Vector3(0, 10, 0);
             }
-            EGameObject.transform.position = new Vector3(0, 10, 0);
         }
         
         public override void Dispose()

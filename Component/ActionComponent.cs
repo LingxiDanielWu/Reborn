@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,7 +24,10 @@ namespace EC.Component
         public Entity Target;
         public ActionType Type;
         public float DelayTime;
-        
+        public float PreTime;   //动作前摇
+        public float BackTime;  //动作后摇
+        public int Priority;
+
         public BufferedAction(Entity doer, Entity target, Vector3 dir, ActionType type = ActionType.None, float delayTime = 0f)
         {
             Doer = doer;
@@ -33,6 +35,16 @@ namespace EC.Component
             Dir = dir;
             Type = type;
             DelayTime = delayTime;
+        }
+
+        public void SetPreTime(float time)
+        {
+            PreTime = time;
+        }
+
+        public void SetBackTime(float time)
+        {
+            BackTime = time;
         }
 
         public bool IsValid(Entity e)
@@ -60,14 +72,18 @@ namespace EC.Component
                 var comp = entity.GetEComponent<StateComponent>(ComponentType.State);
                 return comp.HasTag("Idle") || comp.HasTag("Running");
             } },
-            
+            { ActionType.Attack, (entity, action) =>
+            {
+                var comp = entity.GetEComponent<StateComponent>(ComponentType.State);
+                return comp.HasTag("Idle") || comp.HasTag("Running") || comp.HasTag("Jumping") || comp.HasTag("Falling");
+            } },
         };
 
         private List<EComponent> listenComps = new List<EComponent>();
         private Queue<BufferedAction> actionQueue = new Queue<BufferedAction>();
         private BufferedAction curDoingAction;
         
-        public ActionComponent(Entity e) : base(ComponentType.Action)
+        public ActionComponent() : base(ComponentType.Action)
         {
         }
 
@@ -129,7 +145,7 @@ namespace EC.Component
                     if (c is IActionHandler)
                     {
                         var i = c as IActionHandler;
-                        i.HandleAction(action.Type);
+                        i.HandleAction(action);
                     }
                 }
             }
@@ -151,16 +167,6 @@ namespace EC.Component
             }
 
             return false;
-        }
-
-        private void DoJump()
-        {
-
-        }
-
-        private void DoRun()
-        {
-
         }
 
         public void AddDoActionListener(EComponent comp)

@@ -14,28 +14,29 @@ namespace EC
         {
             DontDestroyOnLoad(gameObject);
             InitManagers();
-            GameConfig.Instance.Init();
-
             InitPlayer();
         }
 
         private void InitPlayer()
         {
-            var player = EntityFactory.Instance.CreateEntity(EntityType.Player, GameObject.Find("Terrain"),
-                "Character/Prefab/ModularCharacters/MC01");
+            var player = EntityFactory.Instance.CreateEntity(EntityType.Character, GameObject.Find("Terrain"),
+                "Man_normal");
             EntityManager.Instance.AddEntity(player);
+            player.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Idle);
         }
 
         void InitManagers()
         {
             EntityManager.Instance.Init();
-            InputManager.Instance.Init();
+            InputManager.Instance.Init(); 
+            GameConfig.Instance.Init();
         }
 
         void DisposeManagers()
         {
             InputManager.Instance.Dispose();
             EntityManager.Instance.Dispose();
+            GameConfig.Instance.Dispose();
         }
 
         // Update is called once per frame

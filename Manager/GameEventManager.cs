@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 namespace EC.Manager
 {
+    //全局事件监听
     public class GameEventManager : Singleton<GameEventManager>
     {
         private Dictionary<EventType, List<Entity>> registerEntts = new Dictionary<EventType, List<Entity>>();

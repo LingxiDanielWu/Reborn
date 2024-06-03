@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using EC.Component;
 using UnityEngine;
 
 namespace EC
@@ -8,7 +9,7 @@ namespace EC
     public enum EntityType
     {
         None,
-        Player,
+        Character,
         NPC,
         Item,
         Plant
@@ -36,6 +37,11 @@ namespace EC
                 if (pair.Value != null)
                     pair.Value.Init();
             }
+        }
+
+        private void OnDestroy()
+        {
+            Dispose();
         }
 
         public virtual void Dispose()
@@ -144,6 +150,22 @@ namespace EC
         {
             yield return new WaitForSeconds(delayTime);
             func();
+        }
+
+        public string GetWeaponTypeName(bool isLower = true)
+        {
+            WeaponType weaponType = WeaponType.None;
+            var weaponComp = GetEComponent<WeaponComponent>(ComponentType.Weapon);
+            if (weaponComp == null)
+            {
+                weaponType = WeaponType.Unarmed;
+            }
+            else
+            {
+                weaponType = weaponComp.HoldingWeapon;
+            }
+            string weaponTypeName = Utils.GetEnumName(typeof(WeaponType), weaponType, isLower);
+            return weaponTypeName;
         }
     }
 }

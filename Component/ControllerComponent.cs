@@ -44,19 +44,6 @@ namespace EC
 
         private ActionComponent actionComp;
 
-        public ActionComponent ActionComp
-        {
-            get
-            {
-                if (actionComp == null)
-                {
-                    actionComp = Parent.GetEComponent<ActionComponent>(ComponentType.Action);
-                }
-
-                return actionComp;
-            }
-        }
-
         public ControllerComponent() : base(ComponentType.Controller)
         {
 
@@ -75,14 +62,13 @@ namespace EC
                 return;
             }
             
-            CreateAction();
+            HandleJoyStickDir();
+            HandlePlayerAction();
         }
 
-        private void CreateAction()
+        private void HandleJoyStickDir()
         {
             JoyStickDir = Vector3.zero;
-            var curActionType = ActionType.None;
-            
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.MoveForward]))
             {
                 JoyStickDir += Vector3.forward;
@@ -102,7 +88,11 @@ namespace EC
             {
                 JoyStickDir += Vector3.right;
             }
+        }
 
+        private void HandlePlayerAction()
+        {
+            var curActionType = ActionType.None;
             float delayTime = 0;
             if (InputManager.Instance.IsTriggerOpt(OptKeyMap[ControlOpt.Jump]))
             {
@@ -117,7 +107,12 @@ namespace EC
             if (curActionType != ActionType.None)
             {
                 var playerAction = new BufferedAction(Parent, null, JoyStickDir, curActionType, delayTime);
-                ActionComp.TryPushAction(playerAction);
+                if (curActionType == ActionType.Attack)
+                {
+                    playerAction.BackTime = 0.25f;
+                }
+
+                actionComp.TryPushAction(playerAction);
             }
             else
             {
@@ -125,14 +120,14 @@ namespace EC
                 {
                     curActionType = ActionType.Run;
                     var playerAction = new BufferedAction(Parent, null, JoyStickDir, curActionType);
-                    ActionComp.TryPushAction(playerAction);
+                    actionComp.TryPushAction(playerAction);
                 }
             }
         }
 
         public override void Init()
         {
-            
+            actionComp = Parent.GetEComponent<ActionComponent>(ComponentType.Action);
         }
 
         public override void Dispose()

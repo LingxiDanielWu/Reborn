@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Cysharp.Text;
 using UnityEngine;
 using EC.Component;
 
@@ -9,7 +10,8 @@ namespace EC.StateGraph
         public Dictionary<StateEnum, State> CreateStates(Entity entt)
         {
             Dictionary<StateEnum, State> states = new Dictionary<StateEnum, State>();
-            var idleState = new State(StateEnum.Idle, entt, OnEnterIdle, OnStayIdle, OnExitIdle);
+            
+            var idleState = new State(StateEnum.Idle, entt, OnEnterIdle, OnStayIdle, OnExitIdle, null, "Idle");
             idleState.RegisterEvent(EventType.FallDown, (entity, data) =>
             {
                 var stateComp = entity.GetEComponent<StateComponent>(ComponentType.State);
@@ -18,21 +20,47 @@ namespace EC.StateGraph
                     stateComp.GotoState(StateEnum.Fall);
                 }
             });
+            idleState.RegisterAction(ActionType.Run, (e) =>
+            {
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Run);
+            });
+            idleState.RegisterAction(ActionType.Jump, (e) =>
+            {
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Jump);
+            });
+            idleState.RegisterAction(ActionType.Attack, (e) =>
+            {
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Attack);
+            });
             states.Add(StateEnum.Idle, idleState);
-            
-            states.Add(StateEnum.Run, new State(StateEnum.Run, entt, OnEnterRun, OnStayRun, OnExitRun));
-            var jumpState = new State(StateEnum.Jump, entt, OnEnterJump, OnStayJump, OnExitJump, IsJumpBusy);
+
+            var runState = new State(StateEnum.Run, entt, OnEnterRun, OnStayRun, OnExitRun, null, "Run-Forward");
+            runState.RegisterAction(ActionType.Jump, (e) =>
+            {
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Jump);
+            });
+            runState.RegisterAction(ActionType.Attack, (e) =>
+            {
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Attack);
+            });
+            states.Add(StateEnum.Run, runState);
+
+            var jumpState = new State(StateEnum.Jump, entt, OnEnterJump, OnStayJump, OnExitJump, IsJumpBusy, "Jump");
             jumpState.RegisterEvent(EventType.FallDown, (entity, data) =>
             {
                 var stateComp = entity.GetEComponent<StateComponent>(ComponentType.State);
                 if (stateComp.HasTag("Jumping"))
                 {
-                    stateComp.GotoState(StateEnum.Fall);
+                    stateComp.GotoState(StateEnum.Fall, 0.1f);
                 }
+            });
+            jumpState.RegisterAction(ActionType.Attack, (e) =>
+            {
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Attack);
             });
             states.Add(StateEnum.Jump, jumpState);
 
-            var fallState = new State(StateEnum.Fall, entt, OnEnterFall, OnStayFall, OnExitFall, IsFallBusy);
+            var fallState = new State(StateEnum.Fall, entt, OnEnterFall, OnStayFall, OnExitFall, IsFallBusy, "Fall");
             fallState.RegisterEvent(EventType.FallToGround, (entity, data) =>
             {
                 var stateComp = entity.GetEComponent<StateComponent>(ComponentType.State);
@@ -41,21 +69,12 @@ namespace EC.StateGraph
                     stateComp.GotoState(StateEnum.Idle);
                 }
             });
-            states.Add(StateEnum.Fall, fallState);
-
-            var comp = entt.GetEComponent<StateComponent>(ComponentType.State);
-            if (comp != null)
+            fallState.RegisterAction(ActionType.Attack, (e) =>
             {
-                comp.RegisterActionHandler(ActionType.Run, () =>
-                {
-                    comp.GotoState(StateEnum.Run);
-                });
-                comp.RegisterActionHandler(ActionType.Jump, () =>
-                {
-                    comp.GotoState(StateEnum.Jump);
-                });
-            }
-
+                e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Attack);
+            });
+            states.Add(StateEnum.Fall, fallState);
+            //todo:攻击动作似乎总是能打断其他state，需要针对状态优先级进行设计
             return states;
         }
 
@@ -68,11 +87,6 @@ namespace EC.StateGraph
                 moveComp.Stop();
             }
             
-            var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            if (animComp != null)
-            {
-                animComp.Play("Idle");
-            }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Idle");
         }
 
@@ -83,11 +97,6 @@ namespace EC.StateGraph
 
         public void OnExitIdle(Entity e, object param = null)
         {
-            var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            if (animComp != null)
-            {
-                animComp.Stop("Idle");
-            }
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Idle");
         }
 
@@ -104,9 +113,6 @@ namespace EC.StateGraph
             if (moveComp != null)
             {
                 moveComp.Move(controllerComp.JoyStickDir);
-                int moveDir = Utils.GetOrientation(Vector3.forward, controllerComp.JoyStickDir);
-                var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-                animComp.Play("Move", moveDir);
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Running");
         }
@@ -118,9 +124,6 @@ namespace EC.StateGraph
             if (moveComp != null)
             {
                 moveComp.Move(controllerComp.JoyStickDir);
-                var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-                animComp.Play("Move", Utils.GetOrientation(Vector3.forward, controllerComp.JoyStickDir));
-
                 if (controllerComp.JoyStickDir == Vector3.zero)
                 {
                     e.GetEComponent<StateComponent>(ComponentType.State)?.GotoState(StateEnum.Idle);
@@ -130,11 +133,6 @@ namespace EC.StateGraph
 
         public void OnExitRun(Entity e, object param = null)
         {
-            var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            if (animComp != null)
-            {
-                animComp.Stop("Move");   
-            }
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Running");
         }
 
@@ -150,8 +148,6 @@ namespace EC.StateGraph
             if (moveComp != null)
             {
                 moveComp.Jump();
-                var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-                animComp.Play("Jump");
             }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Jumping");
         }
@@ -170,8 +166,6 @@ namespace EC.StateGraph
 
         public void OnExitJump(Entity e, object param = null)
         {
-            var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            animComp?.Stop("Jump");
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Jumping");
         }
 
@@ -188,11 +182,6 @@ namespace EC.StateGraph
 
         public void OnEnterFall(Entity e, object param = null)
         {
-            var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            if (animComp != null)
-            {
-                animComp.Play("Fall");
-            }
             e.GetEComponent<StateComponent>(ComponentType.State)?.AddTag("Falling");
         }
         
@@ -210,8 +199,6 @@ namespace EC.StateGraph
         
         public void OnExitFall(Entity e, object param = null)
         {
-            var animComp = e.GetEComponent<AnimatorComponent>(ComponentType.Animator);
-            animComp?.Stop("Fall");
             e.GetEComponent<StateComponent>(ComponentType.State)?.RemoveTag("Falling");
         }
 

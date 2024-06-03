@@ -4,6 +4,6 @@ namespace EC
 {
     public interface IActionHandler
     {
-        public void HandleAction(ActionType type);
+        public void HandleAction(BufferedAction data);
     }
 }

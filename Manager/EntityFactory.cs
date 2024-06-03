@@ -17,14 +17,14 @@ namespace EC.Manager
         {
             switch (type)
             {
-                case EntityType.Player:
-                    GameObjectComponent resComp = new GameObjectComponent(resName, parent);
-                    Player player = resComp.EGameObject.AddComponent<Player>();
-                    
+                case EntityType.Character:
+                    GameObjectComponent resComp = new GameObjectComponent(type, resName, parent);
+                    Character player = resComp.BindEntity<Character>();
                     resComp.Attach(player);
-                    new ActionComponent(player).Attach(player);
+                    
+                    new ActionComponent().Attach(player);
 ;                   new StateComponent().Attach(player);
-                    new AnimatorComponent(resComp.EGameObject.GetComponent<Animator>()).Attach(player);
+                    new AnimatorComponent().Attach(player);
                     new ControllerComponent().Attach(player);
                     new CharacterMoveComponent().Attach(player);
                     new CameraComponent().Attach(player);

@@ -47,10 +47,6 @@ namespace EC.Manager
 
     public class InputManager : Singleton<InputManager>
     {
-        [Range(0, 10f)] 
-        public float JumpSpeed = 5f;
-
-        [Range(-100, 0)] public float GRAVITY = -9.8f;
         private static Dictionary<InputValue, InputData> Inputs = new Dictionary<InputValue, InputData>
         {
             { InputValue.MouseLeft , new InputData(InputValue.MouseLeft, InputType.Mouse, InputState.None)},
@@ -278,6 +274,7 @@ namespace EC.Manager
             }
         }
 
+        //todo:键位查询方式感觉有些低效，需要优化
         public bool IsTriggerOpt(List<InputData> optInputs)
         {
             for (int i = 0; i < optInputs.Count; i++)

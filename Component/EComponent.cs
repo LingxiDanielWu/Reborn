@@ -1,7 +1,4 @@
-
- using UnityEditor.Experimental.GraphView;
-
- namespace EC
+namespace EC
  {
      public enum ComponentType
      {
@@ -14,7 +11,8 @@
          Animator,
          Camera,
          Event,
-         Action
+         Action,
+         Weapon
      }
      
      public abstract class EComponent
@@ -82,7 +80,7 @@
              
          }
 
-         public virtual void SetActive(bool isActive)
+         public void SetActive(bool isActive)
          {
              IsActive = isActive;
          }

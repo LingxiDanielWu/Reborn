@@ -21,7 +21,7 @@ namespace EC
             Dictionary<StateEnum, State> states = new Dictionary<StateEnum, State>();
             switch (ettType)
             {
-                case EntityType.Player:
+                case EntityType.Character:
                     sg = new SGPlayer();
                     states = sg.CreateStates(entt);
                     CommonState.AddAttackState(entt, states);

@@ -19,7 +19,7 @@ namespace EC
                     var sceneCharacterCamera = GameObject.Find("CharacterCamera");
                     if (sceneCharacterCamera == null)
                     {
-                        var prefab = Resources.Load<GameObject>("Prefab/CharacterCamera");
+                        var prefab = Resources.Load<GameObject>("Common/CharacterCamera");
                         sceneCharacterCamera = GameObject.Instantiate(prefab);
                     }
 
@@ -30,7 +30,7 @@ namespace EC
             }
         }
         
-        private float HorizontalAngle
+        public float HorizontalAngle
         {
             get;
             set;
